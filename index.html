@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>QR con logo usando qrcode</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    .qr-container {
+      margin: 15px;
+      padding: 15px;
+      border: 1px solid #dee2e6;
+      border-radius: 0.75rem;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+      background-color: #fff;
+      text-align: center;
+      width: 220px;
+    }
+    canvas {
+      image-rendering: pixelated;
+      width: 200px !important;
+      height: 200px !important;
+      display: block;
+      margin: 0 auto;
+      border-radius: 0.5rem;
+    }
+    /* Header simple para pantalla */
+    .mesa-header {
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #212529; /* texto oscuro */
+    }
+    /* Footer simple para pantalla */
+    .footer-text {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #6c757d; /* gris bootstrap */
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h2 class="text-center mb-4">Generador QR con logo usando qrcode</h2>
+    <div class="mb-4 text-center">
+      <input type="file" id="logoInput" accept="image/*" class="form-control w-50 mx-auto" />
+    </div>
+    <div id="contenedor" class="d-flex flex-wrap justify-content-center gap-3"></div>
+  </div>
+
+  <script>
+    const logoInput = document.getElementById("logoInput");
+    const contenedor = document.getElementById("contenedor");
+
+    logoInput.addEventListener("change", () => {
+      const file = logoInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const logoURL = e.target.result;
+        contenedor.innerHTML = "";
+
+        for (let i = 1; i <= 60; i++) {
+          const div = document.createElement("div");
+          div.className = "qr-container position-relative";
+
+          // Header simple en pantalla
+          const header = document.createElement("div");
+          header.className = "mesa-header";
+          header.textContent = `Mesa #${i}`;
+          div.appendChild(header);
+
+          const canvas = document.createElement("canvas");
+          div.appendChild(canvas);
+
+          // Footer simple en pantalla
+          const footer = document.createElement("p");
+          footer.className = "footer-text";
+          footer.textContent = "Conéctate al wifi y ordena";
+          div.appendChild(footer);
+
+          const button = document.createElement("button");
+          button.className = "btn btn-primary mt-2 w-100";
+          button.textContent = "Descargar";
+          button.addEventListener("click", () => {
+            const tempCanvas = document.createElement("canvas");
+            const ctx = tempCanvas.getContext("2d");
+            tempCanvas.width = 220;
+            tempCanvas.height = 320;
+
+            // Fondo blanco
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+            // Header fondo azul y texto blanco
+            ctx.fillStyle = "#0d6efd";
+            ctx.fillRect(0, 0, tempCanvas.width, 40);
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 18px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(`Mesa #${i}`, tempCanvas.width / 2, 27);
+
+            // QR
+            ctx.drawImage(canvas, 10, 50, 200, 200);
+
+            // Footer fondo degradado
+            const gradient = ctx.createLinearGradient(0, 260, 0, 320);
+            gradient.addColorStop(0, "rgba(13,110,253,0.85)");
+            gradient.addColorStop(1, "rgba(10,90,230,0.85)");
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 260, tempCanvas.width, 60);
+
+            // Texto footer blanco con sombra
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 14px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+            ctx.shadowColor = "rgba(0,0,0,0.7)";
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 1;
+            ctx.fillText("📶 Conéctate al wifi y ordena", tempCanvas.width / 2, 295);
+
+            // Descargar imagen
+            const link = document.createElement("a");
+            link.download = `mesa_${i}.png`;
+            link.href = tempCanvas.toDataURL("image/png");
+            link.click();
+          });
+          div.appendChild(button);
+
+          contenedor.appendChild(div);
+
+          QRCode.toCanvas(
+            canvas,
+            `https://banderiita.com/tabs/table/${i}/company/DELG`,
+            {
+              width: 200,
+              margin: 1,
+              color: {
+                dark: "#000000",
+                light: "#ffffff"
+              }
+            },
+            (error) => {
+              if (error) console.error(error);
+              else {
+                const ctx = canvas.getContext("2d");
+                const logoImg = new Image();
+                logoImg.onload = () => {
+                  const size = 50;
+                  const x = (canvas.width - size) / 2;
+                  const y = (canvas.height - size) / 2;
+                  ctx.drawImage(logoImg, x, y, size, size);
+                };
+                logoImg.src = logoURL;
+              }
+            }
+          );
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
+
